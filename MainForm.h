@@ -10,12 +10,12 @@ namespace Clarified {
 	using namespace System::Drawing;
 
 	/// <summary>
-	/// Summary for Form1
+	/// Summary for MainForm
 	/// </summary>
-	public ref class Form1 : public System::Windows::Forms::Form
+	public ref class MainForm : public System::Windows::Forms::Form
 	{
 	public:
-		Form1(void)
+		MainForm(void)
 		{
 			InitializeComponent();
 			//
@@ -27,7 +27,7 @@ namespace Clarified {
 		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
-		~Form1()
+		~MainForm()
 		{
 			if (components)
 			{
@@ -50,7 +50,7 @@ namespace Clarified {
 		{
 			this->components = gcnew System::ComponentModel::Container();
 			this->Size = System::Drawing::Size(300,300);
-			this->Text = L"Form1";
+			this->Text = L"Clarified";
 			this->Padding = System::Windows::Forms::Padding(0);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 		}
