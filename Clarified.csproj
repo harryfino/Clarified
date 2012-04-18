@@ -54,6 +54,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Win32\HookManager.Callbacks.cs" />
+    <Compile Include="Win32\HookManager.cs" />
+    <Compile Include="Win32\HookManager.Structures.cs" />
+    <Compile Include="Win32\HookManager.Windows.cs" />
+    <Compile Include="Win32\MouseEventExtArgs.cs" />
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
