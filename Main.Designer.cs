@@ -31,6 +31,8 @@
 			this.uxDebugText = new System.Windows.Forms.Label();
 			this.uxDebugLabel = new System.Windows.Forms.Label();
 			this.uxDebugCheckBox = new System.Windows.Forms.CheckBox();
+			this.uxViewport = new System.Windows.Forms.PictureBox();
+			((System.ComponentModel.ISupportInitialize)(this.uxViewport)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// uxDebugText
@@ -64,17 +66,29 @@
 			this.uxDebugCheckBox.UseVisualStyleBackColor = true;
 			this.uxDebugCheckBox.CheckedChanged += new System.EventHandler(this.uxDebugCheckBox_CheckedChanged);
 			// 
+			// uxViewport
+			// 
+			this.uxViewport.Location = new System.Drawing.Point(32, 92);
+			this.uxViewport.Name = "uxViewport";
+			this.uxViewport.Size = new System.Drawing.Size(489, 247);
+			this.uxViewport.TabIndex = 3;
+			this.uxViewport.TabStop = false;
+			this.uxViewport.Paint += new System.Windows.Forms.PaintEventHandler(this.uxViewport_Paint);
+			// 
 			// Main
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(570, 413);
+			this.Controls.Add(this.uxViewport);
 			this.Controls.Add(this.uxDebugCheckBox);
 			this.Controls.Add(this.uxDebugLabel);
 			this.Controls.Add(this.uxDebugText);
 			this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Name = "Main";
 			this.Text = "Clarified";
+			this.Load += new System.EventHandler(this.Main_Load);
+			((System.ComponentModel.ISupportInitialize)(this.uxViewport)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -85,6 +99,7 @@
 		private System.Windows.Forms.Label uxDebugText;
 		private System.Windows.Forms.Label uxDebugLabel;
 		private System.Windows.Forms.CheckBox uxDebugCheckBox;
+		private System.Windows.Forms.PictureBox uxViewport;
 	}
 }
 
