@@ -1,16 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Drawing.Imaging;
 using System.Drawing;
-using System.Windows.Forms;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace Clarified
 {
 	public delegate byte[] PixelEnumeratorCallback(byte[] color, Point memoryPosition);
 
+	/// <summary>
+	/// Abstraction of the Bitmap class that allows gives us fast access to the pixels
+	/// </summary>
+	/// <remarks>
+	/// Thanks to Scott Kay for this contribution!
+	/// </remarks>
 	public sealed class FastAccessBitmap: IDisposable
 	{
 		#region Constants

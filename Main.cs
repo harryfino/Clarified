@@ -59,7 +59,78 @@ namespace Clarified
 			return screenshot;
 		}
 
+		/// <summary>
+		/// Updates the color block with the selected color
+		/// </summary>
+		private void UpdateColor()
+		{
+			// get the color at the current cursor position from the screenshot
+			var color = CurrentScreenshot.GetPixelSafe(CurrentX, CurrentY);
+
+			// update the color block
+			uxColor.BackColor = color;
+
+			// update the RGB hex value
+			uxRgbHex.Text = string.Format("#{0:X2}{1:X2}{2:X2}", color.R, color.G, color.B);
+			uxRgb.Text = string.Format("rgb({0:N0}, {1:N0}, {2:N0})", color.R, color.G, color.B);
+			uxHsl.Text = string.Format("hsl({0:N0}, {1:N0}%, {2:N0}%)", color.GetHue(), color.GetSaturation() * 100, color.GetBrightness() * 100);
+		}
+
 		#region Private Events
+		/// <summary>
+		/// An event that is raised when the form loads
+		/// </summary>
+		private void Main_Load(object sender, EventArgs e)
+		{
+			this.CurrentScreenshot = new FastAccessBitmap(this.TakeScreenshot(), false);
+
+			this.ViewportWidth = uxViewport.Width;
+			this.ViewportHeight = uxViewport.Height;
+
+			this.OffsetX = (ViewportWidth / 2);
+			this.OffsetY = (ViewportHeight / 2);
+
+			this.ZoomLevel = 6;
+			this.ZoomWidth = ViewportWidth / ZoomLevel;
+			this.ZoomHeight = ViewportHeight / ZoomLevel;
+			this.ZoomMidPoint = ZoomLevel / 2;
+
+			this.CrosshairPen = new Pen(Color.Black, 1);
+
+			HookManager.MouseMove += HookManager_MouseMove;
+			HookManager.MouseClick += HookManager_MouseClick;
+		}
+
+		/// <summary>
+		/// An event that is raised when the viewport needs to paint
+		/// </summary>
+		private void uxViewport_Paint(object sender, PaintEventArgs e)
+		{
+			// get the screenshot offsets based on the cursor position
+			var x = CurrentX - (ZoomWidth / 2);
+			var y = CurrentY - (ZoomHeight / 2);
+
+			// define the rectangles for the scale image
+			var viewport = new Rectangle(0, 0, ViewportWidth, ViewportHeight);
+			var screenshot = new Rectangle(x, y, ZoomWidth, ZoomHeight);
+			var square = new Rectangle(OffsetX - ZoomMidPoint, OffsetY - ZoomMidPoint, ZoomLevel, ZoomLevel);
+
+			// draw the screenshot at an offset based on the current cursor position
+			e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+			e.Graphics.DrawImage(this.CurrentScreenshot, viewport, screenshot, GraphicsUnit.Pixel);
+
+			// draw the pixel viewer at the center of the crosshair
+			e.Graphics.DrawRectangle(CrosshairPen, square);
+			
+			// draw the horizontal piece of the crosshair
+			e.Graphics.DrawLine(CrosshairPen, OffsetX, 0, OffsetX, (ViewportHeight / 2) - ZoomMidPoint);
+			e.Graphics.DrawLine(CrosshairPen, OffsetX, (ViewportHeight / 2) + ZoomMidPoint, OffsetX, ViewportHeight);
+
+			// draw the vertical piece of the crosshair
+			e.Graphics.DrawLine(CrosshairPen, 0, OffsetY, (ViewportWidth / 2) - ZoomMidPoint, OffsetY);
+			e.Graphics.DrawLine(CrosshairPen, (ViewportWidth / 2) + ZoomMidPoint, OffsetY, ViewportWidth, OffsetY);
+		}
+
 		/// <summary>
 		/// An event raised when the mouse moves
 		/// </summary>
@@ -72,39 +143,26 @@ namespace Clarified
 			this.CurrentX = e.X;
 			this.CurrentY = e.Y;
 
+			// update the selected color
+			this.UpdateColor();
+
 			// force the viewport to repaint the screenshot
 			uxViewport.Invalidate();
 		}
 
 		/// <summary>
-		/// An event that is raised when the user clicks the debug checkbox
+		/// An event that is raised when the user clicks anyway
 		/// </summary>
-		private void uxDebugCheckBox_CheckedChanged(object sender, EventArgs e)
+		private void HookManager_MouseClick(object sender, MouseEventArgs e)
 		{
-			if (uxDebugCheckBox.Checked)
-				HookManager.MouseMove += HookManager_MouseMove;
-			else
-				HookManager.MouseMove -= HookManager_MouseMove;
-		}
+			// unsubscribe from the global mouse events
+			HookManager.MouseMove -= HookManager_MouseMove;
+			HookManager.MouseClick -= HookManager_MouseClick;
 
-		/// <summary>
-		/// An event that is raised when the viewport needs to paint
-		/// </summary>
-		private void uxViewport_Paint(object sender, PaintEventArgs e)
-		{
-			// draw the screenshot at an offset based on the current cursor position
-			e.Graphics.DrawImage(this.CurrentScreenshot, new Point(OffsetX - CurrentX, OffsetY - CurrentY));
-		}
-
-		/// <summary>
-		/// An event that is raised when the form loads
-		/// </summary>
-		private void Main_Load(object sender, EventArgs e)
-		{
-			this.CurrentScreenshot = this.TakeScreenshot();
-
-			this.OffsetX = (uxViewport.Width / 2);
-			this.OffsetY = (uxViewport.Height / 2);
+			// mark the event as handled
+			var args = e as MouseEventExtArgs;
+			if (args != null)
+				args.Handled = true;
 		}
 		#endregion
 
@@ -112,7 +170,7 @@ namespace Clarified
 		/// <summary>
 		/// A reference to the latest screenshot
 		/// </summary>
-		private Bitmap CurrentScreenshot { get; set; }
+		private FastAccessBitmap CurrentScreenshot { get; set; }
 
 		/// <summary>
 		/// Defines the current X position of the cursor
@@ -135,6 +193,36 @@ namespace Clarified
 		private int OffsetY { get; set; }
 
 		/// <summary>
+		/// Defines the zoom level for the viewport
+		/// </summary>
+		private int ZoomLevel { get; set; }
+
+		/// <summary>
+		/// Defines the midpoint of the zoom level for the crosshair square
+		/// </summary>
+		private int ZoomMidPoint { get; set; }
+
+		/// <summary>
+		/// Defines the width of the viewport
+		/// </summary>
+		private int ViewportWidth { get; set; }
+
+		/// <summary>
+		/// Defines the height of the viewport
+		/// </summary>
+		private int ViewportHeight { get; set; }
+
+		/// <summary>
+		/// Defines the selection width of the screenshot to be scaled
+		/// </summary>
+		private int ZoomWidth { get; set; }
+
+		/// <summary>
+		/// Defines the selection height of the screenshot to be scaled
+		/// </summary>
+		private int ZoomHeight { get; set; }
+
+		/// <summary>
 		/// Defines the max height of all the monitors combined
 		/// </summary>
 		private int MaxHeight { get; set; }
@@ -143,6 +231,11 @@ namespace Clarified
 		/// Defines the max width of all the monitors combined
 		/// </summary>
 		private int MaxWidth { get; set; }
+
+		/// <summary>
+		/// Defines the pen used to draw the crosshairs
+		/// </summary>
+		private Pen CrosshairPen { get; set; }
 		#endregion
 	}
 }
