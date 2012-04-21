@@ -29,7 +29,7 @@
 		private void InitializeComponent()
 		{
 			this.uxViewport = new System.Windows.Forms.PictureBox();
-			this.panel1 = new System.Windows.Forms.Panel();
+			this.uxControlPanel = new System.Windows.Forms.Panel();
 			this.uxColorPalette = new System.Windows.Forms.Panel();
 			this.uxClipboardHsl = new System.Windows.Forms.PictureBox();
 			this.uxClipboardRgb = new System.Windows.Forms.PictureBox();
@@ -40,7 +40,7 @@
 			this.uxRgbHex = new System.Windows.Forms.Label();
 			this.uxColor = new System.Windows.Forms.PictureBox();
 			((System.ComponentModel.ISupportInitialize)(this.uxViewport)).BeginInit();
-			this.panel1.SuspendLayout();
+			this.uxControlPanel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardHsl)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardRgb)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardRgbHex)).BeginInit();
@@ -57,23 +57,23 @@
 			this.uxViewport.TabStop = false;
 			this.uxViewport.Paint += new System.Windows.Forms.PaintEventHandler(this.uxViewport_Paint);
 			// 
-			// panel1
+			// uxControlPanel
 			// 
-			this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
-			this.panel1.Controls.Add(this.uxColorPalette);
-			this.panel1.Controls.Add(this.uxClipboardHsl);
-			this.panel1.Controls.Add(this.uxClipboardRgb);
-			this.panel1.Controls.Add(this.uxClipboardRgbHex);
-			this.panel1.Controls.Add(this.uxGrabColor);
-			this.panel1.Controls.Add(this.uxHsl);
-			this.panel1.Controls.Add(this.uxRgb);
-			this.panel1.Controls.Add(this.uxRgbHex);
-			this.panel1.Controls.Add(this.uxColor);
-			this.panel1.Location = new System.Drawing.Point(299, 9);
-			this.panel1.Name = "panel1";
-			this.panel1.Padding = new System.Windows.Forms.Padding(10);
-			this.panel1.Size = new System.Drawing.Size(148, 292);
-			this.panel1.TabIndex = 9;
+			this.uxControlPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
+			this.uxControlPanel.Controls.Add(this.uxColorPalette);
+			this.uxControlPanel.Controls.Add(this.uxClipboardHsl);
+			this.uxControlPanel.Controls.Add(this.uxClipboardRgb);
+			this.uxControlPanel.Controls.Add(this.uxClipboardRgbHex);
+			this.uxControlPanel.Controls.Add(this.uxGrabColor);
+			this.uxControlPanel.Controls.Add(this.uxHsl);
+			this.uxControlPanel.Controls.Add(this.uxRgb);
+			this.uxControlPanel.Controls.Add(this.uxRgbHex);
+			this.uxControlPanel.Controls.Add(this.uxColor);
+			this.uxControlPanel.Location = new System.Drawing.Point(299, 9);
+			this.uxControlPanel.Name = "uxControlPanel";
+			this.uxControlPanel.Padding = new System.Windows.Forms.Padding(10);
+			this.uxControlPanel.Size = new System.Drawing.Size(148, 292);
+			this.uxControlPanel.TabIndex = 9;
 			// 
 			// uxColorPalette
 			// 
@@ -169,6 +169,7 @@
 			this.uxColor.Size = new System.Drawing.Size(122, 50);
 			this.uxColor.TabIndex = 9;
 			this.uxColor.TabStop = false;
+			this.uxColor.Paint += new System.Windows.Forms.PaintEventHandler(this.uxColor_Paint);
 			// 
 			// Main
 			// 
@@ -176,7 +177,7 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackgroundImage = global::Clarified.Properties.Resources.Background;
 			this.ClientSize = new System.Drawing.Size(459, 310);
-			this.Controls.Add(this.panel1);
+			this.Controls.Add(this.uxControlPanel);
 			this.Controls.Add(this.uxViewport);
 			this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -188,8 +189,8 @@
 			this.TopMost = true;
 			this.Load += new System.EventHandler(this.Main_Load);
 			((System.ComponentModel.ISupportInitialize)(this.uxViewport)).EndInit();
-			this.panel1.ResumeLayout(false);
-			this.panel1.PerformLayout();
+			this.uxControlPanel.ResumeLayout(false);
+			this.uxControlPanel.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardHsl)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardRgb)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardRgbHex)).EndInit();
@@ -201,7 +202,7 @@
 		#endregion
 
 		private System.Windows.Forms.PictureBox uxViewport;
-		private System.Windows.Forms.Panel panel1;
+		private System.Windows.Forms.Panel uxControlPanel;
 		private System.Windows.Forms.Button uxGrabColor;
 		private System.Windows.Forms.Label uxHsl;
 		private System.Windows.Forms.Label uxRgb;

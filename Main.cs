@@ -455,5 +455,31 @@ namespace Clarified
 		/// </summary>
 		private ScreenProxy Proxy { get; set; }
 		#endregion
+
+		/// <summary>
+		/// An event that is raised when the color box is painted
+		/// </summary>
+		private void uxColor_Paint(object sender, PaintEventArgs e)
+		{
+			var outerBorder = uxColor.ClientRectangle;
+			var outerBorderSize = 1;
+
+			var innerBorder = new Rectangle(outerBorder.Location, outerBorder.Size);
+			var innerBorderSize = 3;
+
+			innerBorder.Inflate(-outerBorderSize, -outerBorderSize);
+
+			ControlPaint.DrawBorder(e.Graphics, outerBorder,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid);
+
+			ControlPaint.DrawBorder(e.Graphics, innerBorder, 
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid);
+		}
 	}
 }
