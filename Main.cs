@@ -323,11 +323,6 @@ namespace Clarified
 		private Pen GridPen { get; set; }
 
 		/// <summary>
-		/// Defines the brush used to paint the background color
-		/// </summary>
-		private SolidBrush BackgroundBrush { get; set; }
-
-		/// <summary>
 		/// Defines the form that will act as a proxy
 		/// </summary>
 		private ScreenProxy Proxy { get; set; }
