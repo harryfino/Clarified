@@ -55,6 +55,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScreenProxy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ScreenProxy.Designer.cs">
+      <DependentUpon>ScreenProxy.cs</DependentUpon>
+    </Compile>
     <Compile Include="Win32\HookManager.Callbacks.cs" />
     <Compile Include="Win32\HookManager.cs" />
     <Compile Include="Win32\HookManager.Structures.cs" />
@@ -72,6 +78,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="ScreenProxy.resx">
+      <DependentUpon>ScreenProxy.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
