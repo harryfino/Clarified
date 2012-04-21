@@ -85,6 +85,7 @@
 			// uxClipboardHsl
 			// 
 			this.uxClipboardHsl.BackColor = System.Drawing.Color.Transparent;
+			this.uxClipboardHsl.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.uxClipboardHsl.Image = global::Clarified.Properties.Resources.Clipboard;
 			this.uxClipboardHsl.Location = new System.Drawing.Point(13, 113);
 			this.uxClipboardHsl.Name = "uxClipboardHsl";
@@ -93,10 +94,13 @@
 			this.uxClipboardHsl.TabIndex = 16;
 			this.uxClipboardHsl.TabStop = false;
 			this.uxClipboardHsl.Click += new System.EventHandler(this.uxClipboardHsl_Click);
+			this.uxClipboardHsl.MouseEnter += new System.EventHandler(this.uxClipboard_MouseEnter);
+			this.uxClipboardHsl.MouseLeave += new System.EventHandler(this.uxClipboard_MouseLeave);
 			// 
 			// uxClipboardRgb
 			// 
 			this.uxClipboardRgb.BackColor = System.Drawing.Color.Transparent;
+			this.uxClipboardRgb.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.uxClipboardRgb.Image = global::Clarified.Properties.Resources.Clipboard;
 			this.uxClipboardRgb.Location = new System.Drawing.Point(13, 91);
 			this.uxClipboardRgb.Name = "uxClipboardRgb";
@@ -105,10 +109,13 @@
 			this.uxClipboardRgb.TabIndex = 15;
 			this.uxClipboardRgb.TabStop = false;
 			this.uxClipboardRgb.Click += new System.EventHandler(this.uxClipboardRgb_Click);
+			this.uxClipboardRgb.MouseEnter += new System.EventHandler(this.uxClipboard_MouseEnter);
+			this.uxClipboardRgb.MouseLeave += new System.EventHandler(this.uxClipboard_MouseLeave);
 			// 
 			// uxClipboardRgbHex
 			// 
 			this.uxClipboardRgbHex.BackColor = System.Drawing.Color.Transparent;
+			this.uxClipboardRgbHex.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.uxClipboardRgbHex.Image = global::Clarified.Properties.Resources.Clipboard;
 			this.uxClipboardRgbHex.Location = new System.Drawing.Point(13, 69);
 			this.uxClipboardRgbHex.Name = "uxClipboardRgbHex";
@@ -117,6 +124,8 @@
 			this.uxClipboardRgbHex.TabIndex = 14;
 			this.uxClipboardRgbHex.TabStop = false;
 			this.uxClipboardRgbHex.Click += new System.EventHandler(this.uxClipboardRgbHex_Click);
+			this.uxClipboardRgbHex.MouseEnter += new System.EventHandler(this.uxClipboard_MouseEnter);
+			this.uxClipboardRgbHex.MouseLeave += new System.EventHandler(this.uxClipboard_MouseLeave);
 			// 
 			// uxGrabColor
 			// 

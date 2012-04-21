@@ -207,6 +207,26 @@ namespace Clarified
 		}
 
 		/// <summary>
+		/// An event that is raised when the users mouse goes over a clipboard picture
+		/// </summary>
+		private void uxClipboard_MouseEnter(object sender, EventArgs e)
+		{
+			var clipboard = sender as PictureBox;
+			if (clipboard != null)
+				clipboard.Image = Properties.Resources.ClipboardHover;
+		}
+		
+		/// <summary>
+		/// An event that is raised when the users moves the mouse off of a clipboard picture
+		/// </summary>
+		private void uxClipboard_MouseLeave(object sender, EventArgs e)
+		{
+			var clipboard = sender as PictureBox;
+			if (clipboard != null)
+				clipboard.Image = Properties.Resources.Clipboard;
+		}
+
+		/// <summary>
 		/// An event that is raised when the user clicks the clipboard icon for RGB-Hex
 		/// </summary>
 		private void uxClipboardRgbHex_Click(object sender, EventArgs e)
@@ -297,6 +317,32 @@ namespace Clarified
 		}
 
 		/// <summary>
+		/// An event that is raised when the color box is painted
+		/// </summary>
+		private void uxColor_Paint(object sender, PaintEventArgs e)
+		{
+			var outerBorder = uxColor.ClientRectangle;
+			var outerBorderSize = 1;
+
+			var innerBorder = new Rectangle(outerBorder.Location, outerBorder.Size);
+			var innerBorderSize = 3;
+
+			innerBorder.Inflate(-outerBorderSize, -outerBorderSize);
+
+			ControlPaint.DrawBorder(e.Graphics, outerBorder,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
+				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid);
+
+			ControlPaint.DrawBorder(e.Graphics, innerBorder,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid);
+		}
+
+		/// <summary>
 		/// An event that is raised when the user clicks on one of the colors in the palette
 		/// </summary>
 		private void colorPanel_Click(object sender, EventArgs e)
@@ -317,8 +363,22 @@ namespace Clarified
 			var panel = sender as Panel;
 			if (panel != null)
 			{
-				// draw a hot pink border around the color panel
-				ControlPaint.DrawBorder(panel.CreateGraphics(), panel.ClientRectangle, Color.HotPink, ButtonBorderStyle.Solid);
+				var outerBorder = panel.ClientRectangle;
+				var outerBorderSize = 1;
+
+				var innerBorder = new Rectangle(outerBorder.Location, outerBorder.Size);
+				var innerBorderSize = 1;
+
+				innerBorder.Inflate(-outerBorderSize, -outerBorderSize);
+
+				using (var graphics = panel.CreateGraphics())
+				{
+					ControlPaint.DrawBorder(graphics, innerBorder,
+						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid,
+						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid,
+						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid,
+						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid);
+				}
 			}
 		}
 
@@ -455,31 +515,5 @@ namespace Clarified
 		/// </summary>
 		private ScreenProxy Proxy { get; set; }
 		#endregion
-
-		/// <summary>
-		/// An event that is raised when the color box is painted
-		/// </summary>
-		private void uxColor_Paint(object sender, PaintEventArgs e)
-		{
-			var outerBorder = uxColor.ClientRectangle;
-			var outerBorderSize = 1;
-
-			var innerBorder = new Rectangle(outerBorder.Location, outerBorder.Size);
-			var innerBorderSize = 3;
-
-			innerBorder.Inflate(-outerBorderSize, -outerBorderSize);
-
-			ControlPaint.DrawBorder(e.Graphics, outerBorder,
-				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
-				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
-				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid,
-				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid);
-
-			ControlPaint.DrawBorder(e.Graphics, innerBorder, 
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid);
-		}
 	}
 }

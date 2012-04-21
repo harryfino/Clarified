@@ -73,5 +73,12 @@ namespace Clarified.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        internal static System.Drawing.Bitmap ClipboardHover {
+            get {
+                object obj = ResourceManager.GetObject("ClipboardHover", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
