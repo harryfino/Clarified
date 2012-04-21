@@ -124,6 +124,10 @@ namespace Clarified
 			// wire up the click event to change the selected color
 			colorPanel.Click += colorPanel_Click;
 
+			// wire up the mouse enter/leave events to give the panel a hover-border
+			colorPanel.MouseEnter += colorPanel_MouseEnter;
+			colorPanel.MouseLeave += colorPanel_MouseLeave;
+
 			// figure out where to put it
 			if ( numColors > 0 )
 			{
@@ -302,6 +306,32 @@ namespace Clarified
 			{
 				// update the selected color to this color palette selection
 				this.UpdateColor(panel.BackColor);
+			}
+		}
+
+		/// <summary>
+		/// An event that is raised when the user starts hovering over a color panel
+		/// </summary>
+		private void colorPanel_MouseEnter(object sender, EventArgs e)
+		{
+			var panel = sender as Panel;
+			if (panel != null)
+			{
+				// draw a hot pink border around the color panel
+				ControlPaint.DrawBorder(panel.CreateGraphics(), panel.ClientRectangle, Color.HotPink, ButtonBorderStyle.Solid);
+			}
+		}
+
+		/// <summary>
+		/// An event that is raised when the user stops hovering over a color panel
+		/// </summary>
+		private void colorPanel_MouseLeave(object sender, EventArgs e)
+		{
+			var panel = sender as Panel;
+			if (panel != null)
+			{
+				// force the panel to redraw so it loses the border
+				panel.Invalidate();
 			}
 		}
 

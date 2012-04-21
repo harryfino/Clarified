@@ -30,6 +30,7 @@
 		{
 			this.uxViewport = new System.Windows.Forms.PictureBox();
 			this.panel1 = new System.Windows.Forms.Panel();
+			this.uxColorPalette = new System.Windows.Forms.Panel();
 			this.uxClipboardHsl = new System.Windows.Forms.PictureBox();
 			this.uxClipboardRgb = new System.Windows.Forms.PictureBox();
 			this.uxClipboardRgbHex = new System.Windows.Forms.PictureBox();
@@ -38,7 +39,6 @@
 			this.uxRgb = new System.Windows.Forms.Label();
 			this.uxRgbHex = new System.Windows.Forms.Label();
 			this.uxColor = new System.Windows.Forms.PictureBox();
-			this.uxColorPalette = new System.Windows.Forms.Panel();
 			((System.ComponentModel.ISupportInitialize)(this.uxViewport)).BeginInit();
 			this.panel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardHsl)).BeginInit();
@@ -74,6 +74,13 @@
 			this.panel1.Padding = new System.Windows.Forms.Padding(10);
 			this.panel1.Size = new System.Drawing.Size(148, 292);
 			this.panel1.TabIndex = 9;
+			// 
+			// uxColorPalette
+			// 
+			this.uxColorPalette.Location = new System.Drawing.Point(13, 152);
+			this.uxColorPalette.Name = "uxColorPalette";
+			this.uxColorPalette.Size = new System.Drawing.Size(122, 70);
+			this.uxColorPalette.TabIndex = 17;
 			// 
 			// uxClipboardHsl
 			// 
@@ -113,11 +120,12 @@
 			// 
 			// uxGrabColor
 			// 
-			this.uxGrabColor.Location = new System.Drawing.Point(38, 256);
+			this.uxGrabColor.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.uxGrabColor.Location = new System.Drawing.Point(13, 238);
 			this.uxGrabColor.Name = "uxGrabColor";
-			this.uxGrabColor.Size = new System.Drawing.Size(75, 23);
+			this.uxGrabColor.Size = new System.Drawing.Size(122, 41);
 			this.uxGrabColor.TabIndex = 13;
-			this.uxGrabColor.Text = "Grab Color";
+			this.uxGrabColor.Text = "Grab A Color";
 			this.uxGrabColor.UseVisualStyleBackColor = true;
 			this.uxGrabColor.MouseUp += new System.Windows.Forms.MouseEventHandler(this.uxGrabColor_MouseUp);
 			// 
@@ -161,13 +169,6 @@
 			this.uxColor.Size = new System.Drawing.Size(122, 50);
 			this.uxColor.TabIndex = 9;
 			this.uxColor.TabStop = false;
-			// 
-			// uxColorPalette
-			// 
-			this.uxColorPalette.Location = new System.Drawing.Point(13, 152);
-			this.uxColorPalette.Name = "uxColorPalette";
-			this.uxColorPalette.Size = new System.Drawing.Size(122, 98);
-			this.uxColorPalette.TabIndex = 17;
 			// 
 			// Main
 			// 
