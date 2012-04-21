@@ -16,9 +16,6 @@ namespace Clarified
 	{
 		public Main()
 		{
-			// enable transparent backgrounds
-			this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-
 			InitializeComponent();
 			InitializeScreenSize();
 		}
@@ -324,6 +321,11 @@ namespace Clarified
 		/// Defines the pen used to draw the grids
 		/// </summary>
 		private Pen GridPen { get; set; }
+
+		/// <summary>
+		/// Defines the brush used to paint the background color
+		/// </summary>
+		private SolidBrush BackgroundBrush { get; set; }
 
 		/// <summary>
 		/// Defines the form that will act as a proxy

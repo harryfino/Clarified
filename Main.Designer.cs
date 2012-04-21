@@ -28,7 +28,6 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
 			this.uxViewport = new System.Windows.Forms.PictureBox();
 			this.panel1 = new System.Windows.Forms.Panel();
 			this.uxClipboardHsl = new System.Windows.Forms.PictureBox();
@@ -50,7 +49,6 @@
 			// uxViewport
 			// 
 			this.uxViewport.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
-			this.uxViewport.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.uxViewport.Location = new System.Drawing.Point(10, 10);
 			this.uxViewport.Name = "uxViewport";
 			this.uxViewport.Size = new System.Drawing.Size(300, 300);
@@ -78,7 +76,7 @@
 			// uxClipboardHsl
 			// 
 			this.uxClipboardHsl.BackColor = System.Drawing.Color.Transparent;
-			this.uxClipboardHsl.Image = ((System.Drawing.Image)(resources.GetObject("uxClipboardHsl.Image")));
+			this.uxClipboardHsl.Image = global::Clarified.Properties.Resources.Clipboard;
 			this.uxClipboardHsl.Location = new System.Drawing.Point(13, 113);
 			this.uxClipboardHsl.Name = "uxClipboardHsl";
 			this.uxClipboardHsl.Size = new System.Drawing.Size(16, 16);
@@ -90,7 +88,7 @@
 			// uxClipboardRgb
 			// 
 			this.uxClipboardRgb.BackColor = System.Drawing.Color.Transparent;
-			this.uxClipboardRgb.Image = ((System.Drawing.Image)(resources.GetObject("uxClipboardRgb.Image")));
+			this.uxClipboardRgb.Image = global::Clarified.Properties.Resources.Clipboard;
 			this.uxClipboardRgb.Location = new System.Drawing.Point(13, 91);
 			this.uxClipboardRgb.Name = "uxClipboardRgb";
 			this.uxClipboardRgb.Size = new System.Drawing.Size(16, 16);
@@ -102,7 +100,7 @@
 			// uxClipboardRgbHex
 			// 
 			this.uxClipboardRgbHex.BackColor = System.Drawing.Color.Transparent;
-			this.uxClipboardRgbHex.Image = ((System.Drawing.Image)(resources.GetObject("uxClipboardRgbHex.Image")));
+			this.uxClipboardRgbHex.Image = global::Clarified.Properties.Resources.Clipboard;
 			this.uxClipboardRgbHex.Location = new System.Drawing.Point(13, 69);
 			this.uxClipboardRgbHex.Name = "uxClipboardRgbHex";
 			this.uxClipboardRgbHex.Size = new System.Drawing.Size(16, 16);
@@ -166,6 +164,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.BackgroundImage = global::Clarified.Properties.Resources.Background;
 			this.ClientSize = new System.Drawing.Size(470, 320);
 			this.Controls.Add(this.panel1);
 			this.Controls.Add(this.uxViewport);
@@ -174,6 +173,7 @@
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "Main";
+			this.ShowInTaskbar = false;
 			this.Text = "Clarified";
 			this.TopMost = true;
 			this.Load += new System.EventHandler(this.Main_Load);
