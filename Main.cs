@@ -223,6 +223,9 @@ namespace Clarified
 		/// </summary>
 		private void HookManager_MouseClick(object sender, MouseEventArgs e)
 		{
+			if (e.X > this.Left && e.X < this.Right && e.Y < this.Bottom && e.Y > this.Top)
+				return;
+
 			// unsubscribe from the global mouse events
 			HookManager.MouseMove -= HookManager_MouseMove;
 			HookManager.MouseClick -= HookManager_MouseClick;
