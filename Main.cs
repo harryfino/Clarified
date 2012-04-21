@@ -61,6 +61,29 @@ namespace Clarified
 		}
 
 		/// <summary>
+		/// Starts the color selection process
+		/// </summary>
+		private void StartColorSelection()
+		{
+			// disable this button until they select a color
+			uxGrabColor.Enabled = false;
+
+			// take a snapshot
+			this.CurrentScreenshot = new FastAccessBitmap(this.TakeScreenshot(), false);
+
+			// create a screen proxy to prevent the screen from changing while we're sniffing the pixels
+			this.Proxy = new ScreenProxy(this.CurrentScreenshot) { Width = MaxWidth, Height = MaxHeight, Top = 0, Left = 0 };
+			this.Proxy.Show();
+
+			// hook the mouse and start tracking the movement
+			HookManager.MouseMove += HookManager_MouseMove;
+			HookManager.MouseClick += HookManager_MouseClick;
+
+			// draw the viewport
+			uxViewport.Invalidate();
+		}
+
+		/// <summary>
 		/// Updates the color block with the selected color
 		/// </summary>
 		private void UpdateColor()
@@ -99,6 +122,9 @@ namespace Clarified
 
 			this.CrosshairPen = new Pen(Color.Black, 1);
 			this.GridPen = new Pen(Color.FromArgb(50, Color.White), 1);
+
+			// auto-start the color selection
+			this.StartColorSelection();
 		}
 
 		/// <summary>
@@ -132,25 +158,13 @@ namespace Clarified
 		{
 			if (uxGrabColor.Enabled)
 			{
-				// disable this button until they select a color
-				uxGrabColor.Enabled = false;
-
-				// take a snapshot
-				this.CurrentScreenshot = new FastAccessBitmap(this.TakeScreenshot(), false);
+				// initialize the mouse coordinates
 				var mousePoint = new Point(e.X, e.Y);
 				this.CurrentX = uxGrabColor.PointToScreen(mousePoint).X;
 				this.CurrentY = uxGrabColor.PointToScreen(mousePoint).Y;
 
-				// create a screen proxy to prevent the screen from changing while we're sniffing the pixels
-				this.Proxy = new ScreenProxy(this.CurrentScreenshot) { Width = MaxWidth, Height = MaxHeight, Top = 0, Left = 0 };
-				this.Proxy.Show();
-
-				// hook the mouse and start tracking the movement
-				HookManager.MouseMove += HookManager_MouseMove;
-				HookManager.MouseClick += HookManager_MouseClick;
-
-				// draw the viewport
-				uxViewport.Invalidate();
+				// start the color selection
+				this.StartColorSelection();
 			}
 		}
 
