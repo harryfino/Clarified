@@ -38,6 +38,7 @@
 			this.uxRgb = new System.Windows.Forms.Label();
 			this.uxRgbHex = new System.Windows.Forms.Label();
 			this.uxColor = new System.Windows.Forms.PictureBox();
+			this.uxColorPalette = new System.Windows.Forms.Panel();
 			((System.ComponentModel.ISupportInitialize)(this.uxViewport)).BeginInit();
 			this.panel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.uxClipboardHsl)).BeginInit();
@@ -51,7 +52,7 @@
 			this.uxViewport.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
 			this.uxViewport.Location = new System.Drawing.Point(10, 10);
 			this.uxViewport.Name = "uxViewport";
-			this.uxViewport.Size = new System.Drawing.Size(300, 300);
+			this.uxViewport.Size = new System.Drawing.Size(290, 290);
 			this.uxViewport.TabIndex = 3;
 			this.uxViewport.TabStop = false;
 			this.uxViewport.Paint += new System.Windows.Forms.PaintEventHandler(this.uxViewport_Paint);
@@ -59,6 +60,7 @@
 			// panel1
 			// 
 			this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
+			this.panel1.Controls.Add(this.uxColorPalette);
 			this.panel1.Controls.Add(this.uxClipboardHsl);
 			this.panel1.Controls.Add(this.uxClipboardRgb);
 			this.panel1.Controls.Add(this.uxClipboardRgbHex);
@@ -67,10 +69,10 @@
 			this.panel1.Controls.Add(this.uxRgb);
 			this.panel1.Controls.Add(this.uxRgbHex);
 			this.panel1.Controls.Add(this.uxColor);
-			this.panel1.Location = new System.Drawing.Point(310, 10);
+			this.panel1.Location = new System.Drawing.Point(299, 9);
 			this.panel1.Name = "panel1";
 			this.panel1.Padding = new System.Windows.Forms.Padding(10);
-			this.panel1.Size = new System.Drawing.Size(148, 300);
+			this.panel1.Size = new System.Drawing.Size(148, 292);
 			this.panel1.TabIndex = 9;
 			// 
 			// uxClipboardHsl
@@ -111,7 +113,7 @@
 			// 
 			// uxGrabColor
 			// 
-			this.uxGrabColor.Location = new System.Drawing.Point(35, 264);
+			this.uxGrabColor.Location = new System.Drawing.Point(38, 256);
 			this.uxGrabColor.Name = "uxGrabColor";
 			this.uxGrabColor.Size = new System.Drawing.Size(75, 23);
 			this.uxGrabColor.TabIndex = 13;
@@ -160,12 +162,19 @@
 			this.uxColor.TabIndex = 9;
 			this.uxColor.TabStop = false;
 			// 
+			// uxColorPalette
+			// 
+			this.uxColorPalette.Location = new System.Drawing.Point(13, 152);
+			this.uxColorPalette.Name = "uxColorPalette";
+			this.uxColorPalette.Size = new System.Drawing.Size(122, 98);
+			this.uxColorPalette.TabIndex = 17;
+			// 
 			// Main
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackgroundImage = global::Clarified.Properties.Resources.Background;
-			this.ClientSize = new System.Drawing.Size(470, 320);
+			this.ClientSize = new System.Drawing.Size(459, 310);
 			this.Controls.Add(this.panel1);
 			this.Controls.Add(this.uxViewport);
 			this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -200,6 +209,7 @@
 		private System.Windows.Forms.PictureBox uxClipboardRgbHex;
 		private System.Windows.Forms.PictureBox uxClipboardHsl;
 		private System.Windows.Forms.PictureBox uxClipboardRgb;
+		private System.Windows.Forms.Panel uxColorPalette;
 	}
 }
 

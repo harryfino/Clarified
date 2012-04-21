@@ -20,6 +20,7 @@ namespace Clarified
 			InitializeScreenSize();
 		}
 
+		#region Helper Methods
 		/// <summary>
 		/// Initializes the size of all the user's monitors
 		/// </summary>
@@ -61,9 +62,9 @@ namespace Clarified
 		}
 
 		/// <summary>
-		/// Starts the color selection process
+		/// Begins the color selection process
 		/// </summary>
-		private void StartColorSelection()
+		private void BeginColorSelection()
 		{
 			// disable this button until they select a color
 			uxGrabColor.Enabled = false;
@@ -84,24 +85,98 @@ namespace Clarified
 		}
 
 		/// <summary>
-		/// Updates the color block with the selected color
+		/// Ends the color selection and adds the selected color to the palette
 		/// </summary>
-		private void UpdateColor()
+		private void EndColorSelection()
 		{
-			if (CurrentX >= 0 && CurrentY >= 0)
+			// unsubscribe from the global mouse events
+			HookManager.MouseMove -= HookManager_MouseMove;
+			HookManager.MouseClick -= HookManager_MouseClick;
+
+			// close the proxy
+			if (this.Proxy != null && this.Proxy.Visible)
+			{
+				this.Proxy.Close();
+				this.Proxy = null;
+			}
+
+			// add the selected color to the palette
+			this.AddColorToPalette(uxColor.BackColor);
+
+			// allow the grab button to be used again
+			uxGrabColor.Enabled = true;
+		}
+
+		/// <summary>
+		/// Adds a new color to the color palette
+		/// </summary>
+		private void AddColorToPalette(Color color)
+		{
+			var paletteSize = 16;
+			var paddingSize = 5;
+			var numColors = uxColorPalette.Controls.Count;
+			var offsetX = 0;
+			var offsetY = 0;
+
+			// create a new color panel
+			var colorPanel = new Panel() { Height = paletteSize, Width = paletteSize, BackColor = color };
+
+			// wire up the click event to change the selected color
+			colorPanel.Click += colorPanel_Click;
+
+			// figure out where to put it
+			if ( numColors > 0 )
+			{
+				var lastControl = uxColorPalette.Controls[numColors - 1];
+
+				offsetX = lastControl.Right + paddingSize;
+				offsetY = lastControl.Top;
+
+				if (numColors % 6 == 0)
+				{
+					// go to the new row
+					offsetX = 0;
+					offsetY = lastControl.Bottom + paddingSize;
+				}
+			}
+
+			// adjust the coordinates before we add it
+			colorPanel.Left = offsetX;
+			colorPanel.Top = offsetY;
+
+			// add it to the list
+			uxColorPalette.Controls.Add(colorPanel);
+		}
+
+		/// <summary>
+		/// Gets the color from the screenshot at the specified coordinates
+		/// </summary>
+		private Color GetScreenshotColorAt(int x, int y)
+		{
+			if (x >= 0 && x < MaxWidth && y >= 0 && y < MaxHeight)
 			{
 				// get the color at the current cursor position from the screenshot
-				var color = CurrentScreenshot.GetPixelSafe(CurrentX, CurrentY);
-
-				// update the color block
-				uxColor.BackColor = color;
-
-				// update the RGB hex value
-				uxRgbHex.Text = string.Format("#{0:X2}{1:X2}{2:X2}", color.R, color.G, color.B);
-				uxRgb.Text = string.Format("rgb({0:N0}, {1:N0}, {2:N0})", color.R, color.G, color.B);
-				uxHsl.Text = string.Format("hsl({0:N0}, {1:N0}%, {2:N0}%)", color.GetHue(), color.GetSaturation() * 100, color.GetBrightness() * 100);
+				return CurrentScreenshot.GetPixelSafe(x, y);
 			}
+
+			// invalid color selection
+			return Color.Black;
 		}
+
+		/// <summary>
+		/// Updates the color block with the selected color
+		/// </summary>
+		private void UpdateColor(Color color)
+		{
+			// update the color block
+			uxColor.BackColor = color;
+
+			// update the RGB hex value
+			uxRgbHex.Text = string.Format("#{0:X2}{1:X2}{2:X2}", color.R, color.G, color.B);
+			uxRgb.Text = string.Format("rgb({0:N0}, {1:N0}, {2:N0})", color.R, color.G, color.B);
+			uxHsl.Text = string.Format("hsl({0:N0}, {1:N0}%, {2:N0}%)", color.GetHue(), color.GetSaturation() * 100, color.GetBrightness() * 100);
+		}
+		#endregion
 
 		#region Private Events
 		/// <summary>
@@ -124,7 +199,7 @@ namespace Clarified
 			this.GridPen = new Pen(Color.FromArgb(50, Color.White), 1);
 
 			// auto-start the color selection
-			this.StartColorSelection();
+			this.BeginColorSelection();
 		}
 
 		/// <summary>
@@ -164,7 +239,7 @@ namespace Clarified
 				this.CurrentY = uxGrabColor.PointToScreen(mousePoint).Y;
 
 				// start the color selection
-				this.StartColorSelection();
+				this.BeginColorSelection();
 			}
 		}
 
@@ -186,6 +261,7 @@ namespace Clarified
 
 				// draw the screenshot at an offset based on the current cursor position
 				e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+				e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
 				e.Graphics.DrawImage(this.CurrentScreenshot, viewport, screenshot, GraphicsUnit.Pixel);
 
 				// draw the pixel viewer at the center of the crosshair
@@ -217,6 +293,19 @@ namespace Clarified
 		}
 
 		/// <summary>
+		/// An event that is raised when the user clicks on one of the colors in the palette
+		/// </summary>
+		private void colorPanel_Click(object sender, EventArgs e)
+		{
+			var panel = sender as Panel;
+			if (panel != null)
+			{
+				// update the selected color to this color palette selection
+				this.UpdateColor(panel.BackColor);
+			}
+		}
+
+		/// <summary>
 		/// An event raised when the mouse moves
 		/// </summary>
 		private void HookManager_MouseMove(object sender, MouseEventArgs e)
@@ -225,8 +314,11 @@ namespace Clarified
 			this.CurrentX = e.X;
 			this.CurrentY = e.Y;
 
+			// get the color under the cursor
+			var color = this.GetScreenshotColorAt(e.X, e.Y);
+
 			// update the selected color
-			this.UpdateColor();
+			this.UpdateColor(color);
 
 			// force the viewport to repaint the screenshot
 			uxViewport.Invalidate();
@@ -240,19 +332,8 @@ namespace Clarified
 			if (e.X > this.Left && e.X < this.Right && e.Y < this.Bottom && e.Y > this.Top)
 				return;
 
-			// unsubscribe from the global mouse events
-			HookManager.MouseMove -= HookManager_MouseMove;
-			HookManager.MouseClick -= HookManager_MouseClick;
-
-			// close the proxy
-			if (this.Proxy != null && this.Proxy.Visible)
-			{
-				this.Proxy.Close();
-				this.Proxy = null;
-			}
-
-			// allow the grab button to be used again
-			uxGrabColor.Enabled = true;
+			// end the color selection
+			this.EndColorSelection();
 
 			var args = e as MouseEventExtArgs;
 			if (args != null)
