@@ -47,6 +47,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FastAccessBitmap.cs" />
+    <Compile Include="GradientSlider.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="GradientSlider.Designer.cs">
+      <DependentUpon>GradientSlider.cs</DependentUpon>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -61,11 +67,15 @@
     <Compile Include="ScreenProxy.Designer.cs">
       <DependentUpon>ScreenProxy.cs</DependentUpon>
     </Compile>
+    <Compile Include="SuperColor.cs" />
     <Compile Include="Win32\HookManager.Callbacks.cs" />
     <Compile Include="Win32\HookManager.cs" />
     <Compile Include="Win32\HookManager.Structures.cs" />
     <Compile Include="Win32\HookManager.Windows.cs" />
     <Compile Include="Win32\MouseEventExtArgs.cs" />
+    <EmbeddedResource Include="GradientSlider.resx">
+      <DependentUpon>GradientSlider.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
@@ -100,6 +110,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\clipboardhover.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\draghandle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\dragtrack.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

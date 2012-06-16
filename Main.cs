@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Clarified.Win32;
-using System.Drawing.Drawing2D;
 
 namespace Clarified
 {
@@ -119,7 +114,7 @@ namespace Clarified
 			var offsetY = 0;
 
 			// create a new color panel
-			var colorPanel = new Panel() { Height = paletteSize, Width = paletteSize, BackColor = color };
+			var colorPanel = new Panel() { Height = paletteSize, Width = paletteSize, BackColor = color, Cursor = Cursors.Hand };
 
 			// wire up the click event to change the selected color
 			colorPanel.Click += colorPanel_Click;
@@ -180,6 +175,127 @@ namespace Clarified
 			uxRgb.Text = string.Format("rgb({0:N0}, {1:N0}, {2:N0})", color.R, color.G, color.B);
 			uxHsl.Text = string.Format("hsl({0:N0}, {1:N0}%, {2:N0}%)", color.GetHue(), color.GetSaturation() * 100, color.GetBrightness() * 100);
 		}
+
+		/// <summary>
+		/// Updates the slider colors and raises any associated events
+		/// </summary>
+		private void UpdateSliderColors(bool updateText = true)
+		{
+			// update the slider gradients
+			uxHueSlider.SetBackgroundGradient(this.GetHueGradient());
+			uxSaturationSlider.SetBackgroundGradient(this.GetSaturationGradient());
+			uxLightnessSlider.SetBackgroundGradient(this.GetLightnessGradient());
+
+			if (updateText)
+			{
+				// update the slider numbers
+				uxHueNumber.Text = this.H.ToString();
+				uxSaturationNumber.Text = this.S.ToString();
+				uxLightnessNumber.Text = this.L.ToString();
+			}
+
+			// update the color with the new one from the sliders
+			this.UpdateColor(new SuperColor(h: H, s: S, l: L));
+		}
+
+		/// <summary>
+		/// Gets the hue gradient based on the other sliders
+		/// </summary>
+		private LinearGradientBrush GetHueGradient()
+		{
+			// create our brush
+			var hueGradient = new LinearGradientBrush(uxHueSlider.ClientRectangle, Color.Black, Color.Black, 0, false);
+
+			var colors = new Color[37];
+			var positions = new float[37];
+			var colorBlend = new ColorBlend();
+
+			// create 36 stops on the gradient
+			for (var stop = 0; stop < 37; stop++)
+			{
+				// first, create the color for this stop
+				colors[stop] = new SuperColor(stop * 10, S, L);
+
+				// next, add a position for each stop
+				positions[stop] = stop / 36f;
+			}
+
+			// add the stops and positions to the colorblend
+			colorBlend.Colors = colors;
+			colorBlend.Positions = positions;
+
+			// add the colorblend to the brush
+			hueGradient.InterpolationColors = colorBlend;
+
+			// we're finished
+			return hueGradient;
+		}
+
+		/// <summary>
+		/// Gets the saturation gradient based on the other sliders
+		/// </summary>
+		private LinearGradientBrush GetSaturationGradient()
+		{
+			// create our brush
+			var saturationGradient = new LinearGradientBrush(uxHueSlider.ClientRectangle, Color.Black, Color.Black, 0, false);
+
+			var colors = new Color[3];
+			var positions = new float[3];
+			var colorBlend = new ColorBlend();
+
+			// create 3 stops
+			for (var stop = 0; stop < 3; stop++)
+			{
+				// first, create the color for this stop
+				colors[stop] = new SuperColor(H, stop * 50, L); ;
+
+				// next, add a position for each stop
+				positions[stop] = stop / 2f;
+			}
+
+			// add the stops to the colorblend
+			colorBlend.Colors = colors;
+			colorBlend.Positions = positions;
+
+			// add the colorblend to the brush
+			saturationGradient.InterpolationColors = colorBlend;
+
+			// we're finished
+			return saturationGradient;
+		}
+
+		/// <summary>
+		/// Gets the lightness gradient based on the other sliders
+		/// </summary>
+		private LinearGradientBrush GetLightnessGradient()
+		{
+			// create our brush
+			var lightnessGradient = new LinearGradientBrush(uxHueSlider.ClientRectangle, Color.Black, Color.Black, 0, false);
+
+			var colors = new Color[3];
+			var positions = new float[3];
+			var colorBlend = new ColorBlend();
+
+			// create 3 stops
+			for (var stop = 0; stop < 3; stop++)
+			{
+				// first, create the color for this stop
+				colors[stop] = new SuperColor(H, S, stop * 50);
+
+				// next, add a position for each stop
+				positions[stop] = stop / 2f;
+			}
+
+			// add the stops to the colorblend
+			colorBlend.Colors = colors;
+			colorBlend.Positions = positions;
+
+			// add the colorblend to the brush
+			lightnessGradient.InterpolationColors = colorBlend;
+
+			// we're finished
+			return lightnessGradient;
+		}
 		#endregion
 
 		#region Private Events
@@ -204,6 +320,16 @@ namespace Clarified
 
 			// auto-start the color selection
 			this.BeginColorSelection();
+		}
+
+		/// <summary>
+		/// An event that is raised when the user presses the escape key
+		/// </summary>
+		private void Main_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			// exit the app when ESCAPE is pressed
+			if (e.KeyChar == (char)Keys.Escape)
+				this.Close();
 		}
 
 		/// <summary>
@@ -261,6 +387,10 @@ namespace Clarified
 				var mousePoint = new Point(e.X, e.Y);
 				this.CurrentX = uxGrabColor.PointToScreen(mousePoint).X;
 				this.CurrentY = uxGrabColor.PointToScreen(mousePoint).Y;
+
+				// hide the editor
+				uxColorEditor.Hide();
+				uxViewport.Show();
 
 				// start the color selection
 				this.BeginColorSelection();
@@ -432,6 +562,56 @@ namespace Clarified
 			// make sure the viewport has the last image
 			uxViewport.Invalidate();
 		}
+
+		/// <summary>
+		/// An event that is raised when the user clicks the color block
+		/// </summary>
+		private void uxColor_Click(object sender, EventArgs e)
+		{
+			// initialize this colors of the sliders
+			var superColor = new SuperColor(uxColor.BackColor);
+			this.H = superColor.H;
+			this.S = superColor.S;
+			this.L = superColor.L;
+			this.UpdateSliderColors();
+
+			// show the editor
+			uxColorEditor.Show();
+			uxViewport.Hide();
+		}
+
+		/// <summary>
+		/// An event that is raised when one of the sliders has changed
+		/// </summary>
+		private void Slider_Changed(object sender, EventArgs e)
+		{
+			// update the slider colors
+			this.UpdateSliderColors();
+		}
+
+		/// <summary>
+		/// An event that is raised when the user types into the slider number boxes
+		/// </summary>
+		private void SliderNumber_KeyUp(object sender, KeyEventArgs e)
+		{
+			if (uxHueNumber.Text.Length > 0 && uxSaturationNumber.Text.Length > 0 && uxLightnessNumber.Text.Length > 0)
+			{
+				this.H = int.Parse(uxHueNumber.Text);
+				this.S = int.Parse(uxSaturationNumber.Text);
+				this.L = int.Parse(uxLightnessNumber.Text);
+				this.UpdateSliderColors(false);
+			}
+		}
+
+		/// <summary>
+		/// An event that is raised when the user clicks the close icon
+		/// </summary>
+		private void uxClose_Click(object sender, EventArgs e)
+		{
+			// hide the editor
+			uxColorEditor.Hide();
+			uxViewport.Show();
+		}
 		#endregion
 
 		#region Private Properties
@@ -514,6 +694,33 @@ namespace Clarified
 		/// Defines the form that will act as a proxy
 		/// </summary>
 		private ScreenProxy Proxy { get; set; }
+
+		/// <summary>
+		/// Defines the hue of the current color
+		/// </summary>
+		private int H
+		{
+			get { return (int)(uxHueSlider.Value * 360M); }
+			set { uxHueSlider.Value = value / 360M; }
+		}
+
+		/// <summary>
+		/// Defines the saturation of the current color
+		/// </summary>
+		private int S
+		{
+			get { return (int)Math.Floor(uxSaturationSlider.Value * 100.0M); }
+			set { uxSaturationSlider.Value = value / 100M; }
+		}
+
+		/// <summary>
+		/// Defines the lightness of the current color
+		/// </summary>
+		private int L
+		{
+			get { return (int)(uxLightnessSlider.Value * 100M); }
+			set { uxLightnessSlider.Value = value / 100M; }
+		}
 		#endregion
 	}
 }
