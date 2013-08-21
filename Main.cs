@@ -4,326 +4,97 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using Clarified.Win32;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Clarified
 {
 	public partial class Main : Form
 	{
+		/// <summary>
+		/// Default constructor
+		/// </summary>
 		public Main()
 		{
+			// run the automatic winforms code
 			InitializeComponent();
-			InitializeScreenSize();
-		}
 
-		#region Helper Methods
-		/// <summary>
-		/// Initializes the size of all the user's monitors
-		/// </summary>
-		private void InitializeScreenSize()
-		{
-			foreach (var screen in Screen.AllScreens)
-			{
-				this.MaxWidth += screen.Bounds.Width;
-				if (screen.Bounds.Height > this.MaxHeight)
-					this.MaxHeight = screen.Bounds.Height;
-			}
-		}
+			// establish our custom border colors
+			this.PenBorderActive = new Pen(Color.FromArgb(255, 227, 227, 227), 1);
+			this.PenBorderInactive = new Pen(Color.Transparent);
+			this.PenBorderCurrent = PenBorderActive;
 
-		/// <summary>
-		/// Takes a screenshot of all the user's monitors
-		/// </summary>
-		private Bitmap TakeScreenshot()
-		{
-			var screenshot = new Bitmap(this.MaxWidth, this.MaxHeight, PixelFormat.Format24bppRgb);
-			using (var graphics = Graphics.FromImage(screenshot))
-			{
-				var basePoint = new Point(0, 0);
-				var offsetPoint = new Point(0, 0);
-				
-				foreach (var screen in Screen.AllScreens)
-				{
-					var screenSize = new Size(screen.Bounds.Width, screen.Bounds.Height);
-					var screenGrab = new Bitmap(screen.Bounds.Width, screen.Bounds.Height);
-					using (var g = Graphics.FromImage(screenGrab))
-					{
-						g.CopyFromScreen(offsetPoint, basePoint, screenSize);
-						graphics.DrawImage(screenGrab, offsetPoint);
-						offsetPoint.X += screen.Bounds.Width;
-					}
-				}
-			}
+			// create our pens for drawing the viewport grid
+			this.PenCrosshair = new Pen(Color.Black, 1);
+			this.PenGrid = new Pen(Color.FromArgb(50, Color.White), 1);
 
-			return screenshot;
-		}
-
-		/// <summary>
-		/// Begins the color selection process
-		/// </summary>
-		private void BeginColorSelection()
-		{
-			// disable this button until they select a color
-			uxGrabColor.Enabled = false;
-
-			// take a snapshot
-			this.CurrentScreenshot = new FastAccessBitmap(this.TakeScreenshot(), false);
-
-			// create a screen proxy to prevent the screen from changing while we're sniffing the pixels
-			this.Proxy = new ScreenProxy(this.CurrentScreenshot) { Width = MaxWidth, Height = MaxHeight, Top = 0, Left = 0 };
-			this.Proxy.Show();
-
-			// hook the mouse and start tracking the movement
-			HookManager.MouseMove += HookManager_MouseMove;
-			HookManager.MouseClick += HookManager_MouseClick;
-
-			// draw the viewport
-			uxViewport.Invalidate();
-		}
-
-		/// <summary>
-		/// Ends the color selection and adds the selected color to the palette
-		/// </summary>
-		private void EndColorSelection()
-		{
-			// unsubscribe from the global mouse events
-			HookManager.MouseMove -= HookManager_MouseMove;
-			HookManager.MouseClick -= HookManager_MouseClick;
-
-			// close the proxy
-			if (this.Proxy != null && this.Proxy.Visible)
-			{
-				this.Proxy.Close();
-				this.Proxy = null;
-			}
-
-			// add the selected color to the palette
-			this.AddColorToPalette(uxColor.BackColor);
-
-			// allow the grab button to be used again
-			uxGrabColor.Enabled = true;
-		}
-
-		/// <summary>
-		/// Adds a new color to the color palette
-		/// </summary>
-		private void AddColorToPalette(Color color)
-		{
-			var paletteSize = 16;
-			var paddingSize = 5;
-			var numColors = uxColorPalette.Controls.Count;
-			var offsetX = 0;
-			var offsetY = 0;
-
-			// create a new color panel
-			var colorPanel = new Panel() { Height = paletteSize, Width = paletteSize, BackColor = color, Cursor = Cursors.Hand };
-
-			// wire up the click event to change the selected color
-			colorPanel.Click += colorPanel_Click;
-
-			// wire up the mouse enter/leave events to give the panel a hover-border
-			colorPanel.MouseEnter += colorPanel_MouseEnter;
-			colorPanel.MouseLeave += colorPanel_MouseLeave;
-
-			// figure out where to put it
-			if ( numColors > 0 )
-			{
-				var lastControl = uxColorPalette.Controls[numColors - 1];
-
-				offsetX = lastControl.Right + paddingSize;
-				offsetY = lastControl.Top;
-
-				if (numColors % 6 == 0)
-				{
-					// go to the new row
-					offsetX = 0;
-					offsetY = lastControl.Bottom + paddingSize;
-				}
-			}
-
-			// adjust the coordinates before we add it
-			colorPanel.Left = offsetX;
-			colorPanel.Top = offsetY;
-
-			// add it to the list
-			uxColorPalette.Controls.Add(colorPanel);
-		}
-
-		/// <summary>
-		/// Gets the color from the screenshot at the specified coordinates
-		/// </summary>
-		private Color GetScreenshotColorAt(int x, int y)
-		{
-			if (x >= 0 && x < MaxWidth && y >= 0 && y < MaxHeight)
-			{
-				// get the color at the current cursor position from the screenshot
-				return CurrentScreenshot.GetPixelSafe(x, y);
-			}
-
-			// invalid color selection
-			return Color.Black;
-		}
-
-		/// <summary>
-		/// Updates the color block with the selected color
-		/// </summary>
-		private void UpdateColor(Color color)
-		{
-			// update the color block
-			uxColor.BackColor = color;
-
-			// update the RGB hex value
-			uxRgbHex.Text = string.Format("#{0:X2}{1:X2}{2:X2}", color.R, color.G, color.B);
-			uxRgb.Text = string.Format("rgb({0:N0}, {1:N0}, {2:N0})", color.R, color.G, color.B);
-			uxHsl.Text = string.Format("hsl({0:N0}, {1:N0}%, {2:N0}%)", color.GetHue(), color.GetSaturation() * 100, color.GetBrightness() * 100);
-		}
-
-		/// <summary>
-		/// Updates the slider colors and raises any associated events
-		/// </summary>
-		private void UpdateSliderColors(bool updateText = true)
-		{
-			// update the slider gradients
-			uxHueSlider.SetBackgroundGradient(this.GetHueGradient());
-			uxSaturationSlider.SetBackgroundGradient(this.GetSaturationGradient());
-			uxLightnessSlider.SetBackgroundGradient(this.GetLightnessGradient());
-
-			if (updateText)
-			{
-				// update the slider numbers
-				uxHueNumber.Text = this.H.ToString();
-				uxSaturationNumber.Text = this.S.ToString();
-				uxLightnessNumber.Text = this.L.ToString();
-			}
-
-			// update the color with the new one from the sliders
-			this.UpdateColor(new SuperColor(h: H, s: S, l: L));
-		}
-
-		/// <summary>
-		/// Gets the hue gradient based on the other sliders
-		/// </summary>
-		private LinearGradientBrush GetHueGradient()
-		{
-			// create our brush
-			var hueGradient = new LinearGradientBrush(uxHueSlider.ClientRectangle, Color.Black, Color.Black, 0, false);
-
-			var colors = new Color[37];
-			var positions = new float[37];
-			var colorBlend = new ColorBlend();
-
-			// create 36 stops on the gradient
-			for (var stop = 0; stop < 37; stop++)
-			{
-				// first, create the color for this stop
-				colors[stop] = new SuperColor(stop * 10, S, L);
-
-				// next, add a position for each stop
-				positions[stop] = stop / 36f;
-			}
-
-			// add the stops and positions to the colorblend
-			colorBlend.Colors = colors;
-			colorBlend.Positions = positions;
-
-			// add the colorblend to the brush
-			hueGradient.InterpolationColors = colorBlend;
-
-			// we're finished
-			return hueGradient;
-		}
-
-		/// <summary>
-		/// Gets the saturation gradient based on the other sliders
-		/// </summary>
-		private LinearGradientBrush GetSaturationGradient()
-		{
-			// create our brush
-			var saturationGradient = new LinearGradientBrush(uxHueSlider.ClientRectangle, Color.Black, Color.Black, 0, false);
-
-			var colors = new Color[3];
-			var positions = new float[3];
-			var colorBlend = new ColorBlend();
-
-			// create 3 stops
-			for (var stop = 0; stop < 3; stop++)
-			{
-				// first, create the color for this stop
-				colors[stop] = new SuperColor(H, stop * 50, L); ;
-
-				// next, add a position for each stop
-				positions[stop] = stop / 2f;
-			}
-
-			// add the stops to the colorblend
-			colorBlend.Colors = colors;
-			colorBlend.Positions = positions;
-
-			// add the colorblend to the brush
-			saturationGradient.InterpolationColors = colorBlend;
-
-			// we're finished
-			return saturationGradient;
-		}
-
-		/// <summary>
-		/// Gets the lightness gradient based on the other sliders
-		/// </summary>
-		private LinearGradientBrush GetLightnessGradient()
-		{
-			// create our brush
-			var lightnessGradient = new LinearGradientBrush(uxHueSlider.ClientRectangle, Color.Black, Color.Black, 0, false);
-
-			var colors = new Color[3];
-			var positions = new float[3];
-			var colorBlend = new ColorBlend();
-
-			// create 3 stops
-			for (var stop = 0; stop < 3; stop++)
-			{
-				// first, create the color for this stop
-				colors[stop] = new SuperColor(H, S, stop * 50);
-
-				// next, add a position for each stop
-				positions[stop] = stop / 2f;
-			}
-
-			// add the stops to the colorblend
-			colorBlend.Colors = colors;
-			colorBlend.Positions = positions;
-
-			// add the colorblend to the brush
-			lightnessGradient.InterpolationColors = colorBlend;
-
-			// we're finished
-			return lightnessGradient;
-		}
-		#endregion
-
-		#region Private Events
-		/// <summary>
-		/// An event that is raised when the form loads
-		/// </summary>
-		private void Main_Load(object sender, EventArgs e)
-		{
+			// establish the viewport defaults
 			this.ViewportWidth = uxViewport.Width;
 			this.ViewportHeight = uxViewport.Height;
-
 			this.HalfWidth = (ViewportWidth / 2);
 			this.HalfHeight = (ViewportHeight / 2);
-
 			this.ZoomLevel = 10;
 			this.ZoomWidth = ViewportWidth / ZoomLevel;
 			this.ZoomHeight = ViewportHeight / ZoomLevel;
 			this.ZoomMidPoint = ZoomLevel / 2;
 
-			this.CrosshairPen = new Pen(Color.Black, 1);
-			this.GridPen = new Pen(Color.FromArgb(50, Color.White), 1);
+		}
 
-			// auto-start the color selection
+		#region Hook Events
+		/// <summary>
+		/// A hook event for whenever the mouse is moved
+		/// </summary>
+		private void HookManager_MouseMove(object sender, MouseEventArgs e)
+		{
+			var screen = Screen.FromPoint(new Point { X = e.X, Y = e.Y });
+			if (this.CurrentScreen == null || !this.CurrentScreen.Equals(screen))
+			{
+				this.CurrentScreen = screen;
+				this.ScreenOffsetX = screen.Bounds.X;
+				this.ScreenOffsetY = screen.Bounds.Y;
+				this.CurrentScreenshot = this.TakeScreenshot(screen);
+			}
+
+			this.CurrentX = e.X;
+			this.CurrentY = e.Y;
+
+			if (e.X >= this.CurrentScreen.Bounds.X && e.Y >= this.CurrentScreen.Bounds.Y && e.X < this.CurrentScreen.Bounds.Right && e.Y < this.CurrentScreen.Bounds.Bottom)
+			{
+				// get the color under the cursor
+				var color = this.GetScreenshotColorAt(e.X - this.CurrentScreen.Bounds.X, e.Y - this.CurrentScreen.Bounds.Y);
+
+				// update the selected color
+				this.UpdateColor(color);
+			}
+
+			uxViewport.Invalidate();
+		}
+
+		/// <summary>
+		/// A hook event for whenever the mouse is clicked
+		/// </summary>
+		private void HookManager_MouseClick(object sender, MouseEventArgs e)
+		{
+			// prevent the click from going through
+			((MouseEventExtArgs)e).Handled = true;
+
+			// stop listening for events
+			this.EndColorSelection();
+		}
+		#endregion
+
+		#region Events for Main
+		/// <summary>
+		/// An event that is raised when the main windows loads
+		/// </summary>
+		private void Main_Load(object sender, EventArgs e)
+		{
+			// automatically start eye dropping
 			this.BeginColorSelection();
 		}
 
 		/// <summary>
-		/// An event that is raised when the user presses the escape key
+		/// An event that is raised when a key is pressed
 		/// </summary>
 		private void Main_KeyPress(object sender, KeyPressEventArgs e)
 		{
@@ -333,80 +104,106 @@ namespace Clarified
 		}
 
 		/// <summary>
-		/// An event that is raised when the users mouse goes over a clipboard picture
+		/// An event that is raised when the window needs painting
 		/// </summary>
-		private void uxClipboard_MouseEnter(object sender, EventArgs e)
+		private void Main_Paint(object sender, PaintEventArgs e)
 		{
-			var clipboard = sender as PictureBox;
-			if (clipboard != null)
-				clipboard.Image = Properties.Resources.ClipboardHover;
-		}
-		
-		/// <summary>
-		/// An event that is raised when the users moves the mouse off of a clipboard picture
-		/// </summary>
-		private void uxClipboard_MouseLeave(object sender, EventArgs e)
-		{
-			var clipboard = sender as PictureBox;
-			if (clipboard != null)
-				clipboard.Image = Properties.Resources.Clipboard;
+			// draw a custom border around the window
+			e.Graphics.DrawLine(this.PenBorderCurrent, 0, 0, 0, this.Height - 1);
+			e.Graphics.DrawLine(this.PenBorderCurrent, 0, 0, this.Width - 1, 0);
+			e.Graphics.DrawLine(this.PenBorderCurrent, this.Width - 1, 0, this.Width - 1, this.Height - 1);
+			e.Graphics.DrawLine(this.PenBorderCurrent, 0, this.Height - 1, this.Width - 1, this.Height - 1);
 		}
 
 		/// <summary>
-		/// An event that is raised when the user clicks the clipboard icon for RGB-Hex
+		/// An event that is raised when the window has focus
 		/// </summary>
-		private void uxClipboardRgbHex_Click(object sender, EventArgs e)
+		private void Main_Activated(object sender, EventArgs e)
 		{
-			Clipboard.SetText(uxRgbHex.Text);
+			// set the active border
+			this.PenBorderCurrent = this.PenBorderActive;
+			this.Invalidate();
 		}
 
 		/// <summary>
-		/// An event that is raised when the user clicks the clipboard icon for RGB
+		/// An event that is raised when the window loses focus
 		/// </summary>
-		private void uxClipboardRgb_Click(object sender, EventArgs e)
+		private void Main_Deactivate(object sender, EventArgs e)
 		{
-			Clipboard.SetText(uxRgb.Text);
+			// set the inactive border
+			this.PenBorderCurrent = this.PenBorderInactive;
+			this.Invalidate();
 		}
 
 		/// <summary>
-		/// An event that is raised when the user clicks the clipboard icons for HSL
+		/// An override to move the window from any part of the form
 		/// </summary>
-		private void uxClipboardHsl_Click(object sender, EventArgs e)
+		protected override void WndProc(ref Message m)
 		{
-			Clipboard.SetText(uxHsl.Text);
-		}
-
-		/// <summary>
-		/// An event that is raised when the user clicks the grab button
-		/// </summary>
-		private void uxGrabColor_MouseUp(object sender, MouseEventArgs e)
-		{
-			if (uxGrabColor.Enabled)
+			switch (m.Msg)
 			{
-				// initialize the mouse coordinates
-				var mousePoint = new Point(e.X, e.Y);
-				this.CurrentX = uxGrabColor.PointToScreen(mousePoint).X;
-				this.CurrentY = uxGrabColor.PointToScreen(mousePoint).Y;
+				case WM_NCHITTEST:
+					base.WndProc(ref m);
 
-				// hide the editor
-				uxColorEditor.Hide();
-				uxViewport.Show();
+					if ((int)m.Result == HTCLIENT)
+						m.Result = (IntPtr)HTCAPTION;
 
-				// start the color selection
-				this.BeginColorSelection();
+					return;
 			}
+
+			base.WndProc(ref m);
+		}
+		#endregion
+
+		#region Events for uxClose
+		/// <summary>
+		/// An event that is raised when the mouse is over the close label
+		/// </summary>
+		private void uxClose_MouseEnter(object sender, EventArgs e)
+		{
+			// change the background color to #f0f0f0
+			uxClose.BackColor = Color.FromArgb(255, 240, 240, 240);
 		}
 
 		/// <summary>
-		/// An event that is raised when the viewport needs to paint
+		/// An event that is raised when the mouse is no longer over the label
+		/// </summary>
+		private void uxClose_MouseLeave(object sender, EventArgs e)
+		{
+			// reset the background color
+			uxClose.BackColor = Color.Transparent;
+		}
+
+		/// <summary>
+		/// An event that is raised when the close label needs to be painted
+		/// </summary>
+		private void uxClose_Paint(object sender, PaintEventArgs e)
+		{
+			// paint the cross icon onto the label
+			e.Graphics.DrawImage(Clarified.Properties.Resources.Cross, new Rectangle(11, 11, 10, 10));
+		}
+
+		/// <summary>
+		/// An event that is raised when the close label is clicked
+		/// </summary>
+		private void uxClose_Click(object sender, EventArgs e)
+		{
+			// close the application
+			this.Close();
+		}
+		#endregion
+
+		#region Events for uxViewport
+		/// <summary>
+		/// An event that is raised when the viewport is repainted
 		/// </summary>
 		private void uxViewport_Paint(object sender, PaintEventArgs e)
 		{
 			if (this.CurrentScreenshot != null)
 			{
 				// get the screenshot offsets based on the cursor position
-				var x = CurrentX - (ZoomWidth / 2);
-				var y = CurrentY - (ZoomHeight / 2);
+				var x = CurrentX - ScreenOffsetX - (ZoomWidth / 2);
+				var y = CurrentY - ScreenOffsetY - (ZoomHeight / 2);
 
 				// define the rectangles for the scale image
 				var viewport = new Rectangle(0, 0, ViewportWidth, ViewportHeight);
@@ -419,33 +216,114 @@ namespace Clarified
 				e.Graphics.DrawImage(this.CurrentScreenshot, viewport, screenshot, GraphicsUnit.Pixel);
 
 				// draw the pixel viewer at the center of the crosshair
-				e.Graphics.DrawRectangle(CrosshairPen, square);
+				e.Graphics.DrawRectangle(PenCrosshair, square);
 
 				// draw the horizontal piece of the crosshair
-				e.Graphics.DrawLine(CrosshairPen, HalfWidth, 0, HalfWidth, HalfHeight - ZoomMidPoint);
-				e.Graphics.DrawLine(CrosshairPen, HalfWidth, HalfHeight + ZoomMidPoint, HalfWidth, ViewportHeight);
+				e.Graphics.DrawLine(PenCrosshair, HalfWidth, 0, HalfWidth, HalfHeight - ZoomMidPoint);
+				e.Graphics.DrawLine(PenCrosshair, HalfWidth, HalfHeight + ZoomMidPoint, HalfWidth, ViewportHeight);
 
 				// draw the vertical piece of the crosshair
-				e.Graphics.DrawLine(CrosshairPen, 0, HalfHeight, HalfWidth - ZoomMidPoint, HalfHeight);
-				e.Graphics.DrawLine(CrosshairPen, HalfWidth + ZoomMidPoint, HalfHeight, ViewportWidth, HalfHeight);
+				e.Graphics.DrawLine(PenCrosshair, 0, HalfHeight, HalfWidth - ZoomMidPoint, HalfHeight);
+				e.Graphics.DrawLine(PenCrosshair, HalfWidth + ZoomMidPoint, HalfHeight, ViewportWidth, HalfHeight);
 
 				// draw vertical grid from the center out
 				for (var i = 0; i < HalfWidth; i += ZoomLevel)
 				{
-					e.Graphics.DrawLine(GridPen, HalfWidth + i + ZoomMidPoint, 0, HalfWidth + i + ZoomMidPoint, ViewportHeight);
-					e.Graphics.DrawLine(GridPen, HalfWidth - i - ZoomMidPoint, 0, HalfWidth - i - ZoomMidPoint, ViewportHeight);
+					e.Graphics.DrawLine(PenGrid, HalfWidth + i + ZoomMidPoint, 0, HalfWidth + i + ZoomMidPoint, ViewportHeight);
+					e.Graphics.DrawLine(PenGrid, HalfWidth - i - ZoomMidPoint, 0, HalfWidth - i - ZoomMidPoint, ViewportHeight);
 				}
 
 				// draw horizontal grid from the center out
 				for (var i = 0; i < HalfHeight; i += ZoomLevel)
 				{
 					// draw a vertical line
-					e.Graphics.DrawLine(GridPen, 0, HalfHeight + i + ZoomMidPoint, ViewportWidth, HalfHeight + i + ZoomMidPoint);
-					e.Graphics.DrawLine(GridPen, 0, HalfHeight - i - ZoomMidPoint, ViewportWidth, HalfHeight - i - ZoomMidPoint);
+					e.Graphics.DrawLine(PenGrid, 0, HalfHeight + i + ZoomMidPoint, ViewportWidth, HalfHeight + i + ZoomMidPoint);
+					e.Graphics.DrawLine(PenGrid, 0, HalfHeight - i - ZoomMidPoint, ViewportWidth, HalfHeight - i - ZoomMidPoint);
+				}
+			}
+
+			// draw a custom border around the window
+			e.Graphics.DrawLine(this.PenBorderActive, 1, 1, 1, uxViewport.Height);
+			e.Graphics.DrawLine(this.PenBorderActive, 1, 1, uxViewport.Width, 1);
+			e.Graphics.DrawLine(this.PenBorderActive, uxViewport.Width, 0, uxViewport.Width, uxViewport.Height);
+			e.Graphics.DrawLine(this.PenBorderActive, 0, uxViewport.Height, uxViewport.Width, uxViewport.Height);
+		}
+		#endregion
+
+		#region Events for uxStart
+		/// <summary>
+		/// An event that is raised when the start label is clicked
+		/// </summary>
+		private void uxStart_MouseUp(object sender, MouseEventArgs e)
+		{
+			if (uxStart.Enabled)
+			{
+				// reset the screen
+				this.CurrentScreen = null;
+				this.CurrentScreenshot = null;
+
+				// start capturing the mouse events
+				this.BeginColorSelection();
+			}
+		}
+		#endregion
+
+		#region Events for colorBlock
+		/// <summary>
+		/// An event that is raised when the user clicks on one of the colors in the palette
+		/// </summary>
+		private void colorBlock_Click(object sender, EventArgs e)
+		{
+			var panel = sender as Panel;
+			if (panel != null)
+			{
+				// update the selected color to this color palette selection
+				this.UpdateColor(panel.BackColor);
+			}
+		}
+
+		/// <summary>
+		/// An event that is raised when the user starts hovering over a color panel
+		/// </summary>
+		private void colorBlock_MouseEnter(object sender, EventArgs e)
+		{
+			var panel = sender as Panel;
+			if (panel != null)
+			{
+				var outerBorder = panel.ClientRectangle;
+				var outerBorderSize = 1;
+
+				var innerBorder = new Rectangle(outerBorder.Location, outerBorder.Size);
+				var innerBorderSize = 1;
+
+				innerBorder.Inflate(-outerBorderSize, -outerBorderSize);
+
+				using (var graphics = panel.CreateGraphics())
+				{
+					ControlPaint.DrawBorder(graphics, innerBorder,
+						Color.FromArgb(255, 0, 125, 197), innerBorderSize, ButtonBorderStyle.Solid,
+						Color.FromArgb(255, 0, 125, 197), innerBorderSize, ButtonBorderStyle.Solid,
+						Color.FromArgb(255, 0, 125, 197), innerBorderSize, ButtonBorderStyle.Solid,
+						Color.FromArgb(255, 0, 125, 197), innerBorderSize, ButtonBorderStyle.Solid);
 				}
 			}
 		}
 
+		/// <summary>
+		/// An event that is raised when the user stops hovering over a color panel
+		/// </summary>
+		private void colorBlock_MouseLeave(object sender, EventArgs e)
+		{
+			var panel = sender as Panel;
+			if (panel != null)
+			{
+				// force the panel to redraw so it loses the border
+				panel.Invalidate();
+			}
+		}
+		#endregion
+
+		#region Events for uxColor
 		/// <summary>
 		/// An event that is raised when the color box is painted
 		/// </summary>
@@ -466,261 +344,205 @@ namespace Clarified
 				uxColor.BackColor, outerBorderSize, ButtonBorderStyle.Solid);
 
 			ControlPaint.DrawBorder(e.Graphics, innerBorder,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
-				uxControlPanel.BackColor, innerBorderSize, ButtonBorderStyle.Solid);
-		}
-
-		/// <summary>
-		/// An event that is raised when the user clicks on one of the colors in the palette
-		/// </summary>
-		private void colorPanel_Click(object sender, EventArgs e)
-		{
-			var panel = sender as Panel;
-			if (panel != null)
-			{
-				// update the selected color to this color palette selection
-				this.UpdateColor(panel.BackColor);
-			}
-		}
-
-		/// <summary>
-		/// An event that is raised when the user starts hovering over a color panel
-		/// </summary>
-		private void colorPanel_MouseEnter(object sender, EventArgs e)
-		{
-			var panel = sender as Panel;
-			if (panel != null)
-			{
-				var outerBorder = panel.ClientRectangle;
-				var outerBorderSize = 1;
-
-				var innerBorder = new Rectangle(outerBorder.Location, outerBorder.Size);
-				var innerBorderSize = 1;
-
-				innerBorder.Inflate(-outerBorderSize, -outerBorderSize);
-
-				using (var graphics = panel.CreateGraphics())
-				{
-					ControlPaint.DrawBorder(graphics, innerBorder,
-						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid,
-						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid,
-						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid,
-						Color.HotPink, innerBorderSize, ButtonBorderStyle.Solid);
-				}
-			}
-		}
-
-		/// <summary>
-		/// An event that is raised when the user stops hovering over a color panel
-		/// </summary>
-		private void colorPanel_MouseLeave(object sender, EventArgs e)
-		{
-			var panel = sender as Panel;
-			if (panel != null)
-			{
-				// force the panel to redraw so it loses the border
-				panel.Invalidate();
-			}
-		}
-
-		/// <summary>
-		/// An event raised when the mouse moves
-		/// </summary>
-		private void HookManager_MouseMove(object sender, MouseEventArgs e)
-		{
-			// update the cursor position
-			this.CurrentX = e.X;
-			this.CurrentY = e.Y;
-
-			// get the color under the cursor
-			var color = this.GetScreenshotColorAt(e.X, e.Y);
-
-			// update the selected color
-			this.UpdateColor(color);
-
-			// force the viewport to repaint the screenshot
-			uxViewport.Invalidate();
-		}
-
-		/// <summary>
-		/// An event that is raised when the user clicks anyway
-		/// </summary>
-		private void HookManager_MouseClick(object sender, MouseEventArgs e)
-		{
-			if (e.X > this.Left && e.X < this.Right && e.Y < this.Bottom && e.Y > this.Top)
-				return;
-
-			// end the color selection
-			this.EndColorSelection();
-
-			var args = e as MouseEventExtArgs;
-			if (args != null)
-				args.Handled = true;
-
-			// make sure the viewport has the last image
-			uxViewport.Invalidate();
-		}
-
-		/// <summary>
-		/// An event that is raised when the user clicks the color block
-		/// </summary>
-		private void uxColor_Click(object sender, EventArgs e)
-		{
-			// initialize this colors of the sliders
-			var superColor = new SuperColor(uxColor.BackColor);
-			this.H = superColor.H;
-			this.S = superColor.S;
-			this.L = superColor.L;
-			this.UpdateSliderColors();
-
-			// show the editor
-			uxColorEditor.Show();
-			uxViewport.Hide();
-		}
-
-		/// <summary>
-		/// An event that is raised when one of the sliders has changed
-		/// </summary>
-		private void Slider_Changed(object sender, EventArgs e)
-		{
-			// update the slider colors
-			this.UpdateSliderColors();
-		}
-
-		/// <summary>
-		/// An event that is raised when the user types into the slider number boxes
-		/// </summary>
-		private void SliderNumber_KeyUp(object sender, KeyEventArgs e)
-		{
-			if (uxHueNumber.Text.Length > 0 && uxSaturationNumber.Text.Length > 0 && uxLightnessNumber.Text.Length > 0)
-			{
-				this.H = int.Parse(uxHueNumber.Text);
-				this.S = int.Parse(uxSaturationNumber.Text);
-				this.L = int.Parse(uxLightnessNumber.Text);
-				this.UpdateSliderColors(false);
-			}
-		}
-
-		/// <summary>
-		/// An event that is raised when the user clicks the close icon
-		/// </summary>
-		private void uxClose_Click(object sender, EventArgs e)
-		{
-			// hide the editor
-			uxColorEditor.Hide();
-			uxViewport.Show();
+				this.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				this.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				this.BackColor, innerBorderSize, ButtonBorderStyle.Solid,
+				this.BackColor, innerBorderSize, ButtonBorderStyle.Solid);
 		}
 		#endregion
 
-		#region Private Properties
+		#region Events for uxCopy links
 		/// <summary>
-		/// A reference to the latest screenshot
+		/// An event that is raised when the copy hex link is clicked
 		/// </summary>
+		private void uxCopyHEX_Click(object sender, EventArgs e)
+		{
+			Clipboard.SetText(uxRgbHex.Text);
+			uxCopyHEX.Text = "copied!";
+
+			ResetCopyLabel((Label)sender);
+		}
+
+		/// <summary>
+		/// An event that is raised when the copy rgb link is clicked
+		/// </summary>
+		private void uxCopyRGB_Click(object sender, EventArgs e)
+		{
+			Clipboard.SetText(uxRgb.Text);
+			uxCopyRGB.Text = "copied!";
+
+			ResetCopyLabel((Label)sender);
+		}
+
+		/// <summary>
+		/// An event that is raised when the copy hsl link is clicked
+		/// </summary>
+		private void uxCopyHSL_Click(object sender, EventArgs e)
+		{
+			Clipboard.SetText(uxHsl.Text);
+			uxCopyHSL.Text = "copied!";
+
+			ResetCopyLabel((Label)sender);
+		}
+		#endregion
+
+		#region Helper Functions
+		/// <summary>
+		/// Starts capturing the mouse events
+		/// </summary>
+		private void BeginColorSelection()
+		{
+			// prevent multiple color selections
+			uxStart.Enabled = false;
+
+			// subscribe to the mouse hooks
+			HookManager.MouseMove += HookManager_MouseMove;
+			HookManager.MouseClick += HookManager_MouseClick;
+		}
+
+		/// <summary>
+		/// Stops capturing the mouse events
+		/// </summary>
+		private void EndColorSelection()
+		{
+			// unsubscribe
+			HookManager.MouseMove -= HookManager_MouseMove;
+			HookManager.MouseClick -= HookManager_MouseClick;
+
+			// add the selected color to the palette
+			this.AddColorToPalette(uxColor.BackColor);
+
+			// allow the user to start another color selection
+			uxStart.Enabled = true;
+		}
+
+		/// <summary>
+		/// Adds a new color to the color palette
+		/// </summary>
+		private void AddColorToPalette(Color color)
+		{
+			var paletteSize = 16;
+			var paddingSize = 5;
+			var numColors = uxColorPalette.Controls.Count;
+			var offsetX = 0;
+			var offsetY = 0;
+
+			// create a new color block
+			var colorBlock = new Panel() { Height = paletteSize, Width = paletteSize, BackColor = color, Cursor = Cursors.Hand };
+
+			// wire up the click event to change the selected color
+			colorBlock.Click += colorBlock_Click;
+
+			// wire up the mouse enter/leave events to give the panel a hover-border
+			colorBlock.MouseEnter += colorBlock_MouseEnter;
+			colorBlock.MouseLeave += colorBlock_MouseLeave;
+
+			// figure out where to put it
+			if (numColors > 0)
+			{
+				var lastControl = uxColorPalette.Controls[numColors - 1];
+
+				offsetX = lastControl.Right + paddingSize;
+				offsetY = lastControl.Top;
+
+				if (numColors % 7 == 0)
+				{
+					// go to the new row
+					offsetX = 0;
+					offsetY = lastControl.Bottom + paddingSize;
+				}
+			}
+
+			// adjust the coordinates before we add it
+			colorBlock.Left = offsetX;
+			colorBlock.Top = offsetY;
+
+			// add it to the list
+			uxColorPalette.Controls.Add(colorBlock);
+		}
+
+		/// <summary>
+		/// Grab a screenshot of the specific monitor
+		/// </summary>
+		private FastAccessBitmap TakeScreenshot(Screen currentScreen)
+		{
+			var left = currentScreen.Bounds.X;
+			var top = currentScreen.Bounds.Y;
+			var width = currentScreen.Bounds.Width;
+			var height = currentScreen.Bounds.Height;
+			var size = currentScreen.Bounds.Size;
+			var screenshot = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+
+			using (var graphics = Graphics.FromImage(screenshot))
+			{
+				var source = new Point(left, top);
+				var destination = new Point(0, 0);
+
+				graphics.CopyFromScreen(source, destination, size);
+			}
+
+			return new FastAccessBitmap(screenshot, false);
+		}
+
+		/// <summary>
+		/// Gets the color from the screenshot at the specified coordinates
+		/// </summary>
+		private Color GetScreenshotColorAt(int x, int y)
+		{
+			// get the color at the current cursor position from the screenshot
+			return CurrentScreenshot.GetPixelSafe(x, y);
+		}
+
+		/// <summary>
+		/// Updates the color block with the selected color
+		/// </summary>
+		private void UpdateColor(Color color)
+		{
+			// update the color block
+			uxColor.BackColor = color;
+
+			// update the RGB hex value
+			uxRgbHex.Text = string.Format("#{0:x2}{1:x2}{2:x2}", color.R, color.G, color.B);
+			uxRgb.Text = string.Format("rgb({0:N0}, {1:N0}, {2:N0})", color.R, color.G, color.B);
+			uxHsl.Text = string.Format("hsl({0:N0}, {1:N0}%, {2:N0}%)", color.GetHue(), color.GetSaturation() * 100, color.GetBrightness() * 100);
+		}
+
+		/// <summary>
+		/// An async function to delay the resetting of the copy link text
+		/// </summary>
+		private async void ResetCopyLabel(Label label)
+		{
+			// wait 2 seconds before setting it back
+			await Task.Delay(2000);
+			label.Text = "copy";
+		}
+		#endregion
+
+		#region Properties
+		private const int WM_NCHITTEST = 0x84;
+		private const int HTCLIENT = 0x1;
+		private const int HTCAPTION = 0x2;
+
+		private Pen PenBorderActive { get; set; }
+		private Pen PenBorderInactive { get; set; }
+		private Pen PenBorderCurrent { get; set; }
+		private Pen PenCrosshair { get; set; }
+		private Pen PenGrid { get; set; }
+
+		private Screen CurrentScreen { get; set; }
 		private FastAccessBitmap CurrentScreenshot { get; set; }
-
-		/// <summary>
-		/// Defines the current X position of the cursor
-		/// </summary>
+		private int ScreenOffsetX { get; set; }
+		private int ScreenOffsetY { get; set; }
 		private int CurrentX { get; set; }
-
-		/// <summary>
-		/// Defines the current Y position of the cursor
-		/// </summary>
 		private int CurrentY { get; set; }
-
-		/// <summary>
-		/// Defines the amount to offset the X coordinate in order to center the image
-		/// </summary>
 		private int HalfWidth { get; set; }
-
-		/// <summary>
-		/// Defines the amount to offset the Y coordinate in order to center the image
-		/// </summary>
 		private int HalfHeight { get; set; }
-
-		/// <summary>
-		/// Defines the zoom level for the viewport
-		/// </summary>
 		private int ZoomLevel { get; set; }
-
-		/// <summary>
-		/// Defines the midpoint of the zoom level for the crosshair square
-		/// </summary>
 		private int ZoomMidPoint { get; set; }
-
-		/// <summary>
-		/// Defines the width of the viewport
-		/// </summary>
 		private int ViewportWidth { get; set; }
-
-		/// <summary>
-		/// Defines the height of the viewport
-		/// </summary>
 		private int ViewportHeight { get; set; }
-
-		/// <summary>
-		/// Defines the selection width of the screenshot to be scaled
-		/// </summary>
 		private int ZoomWidth { get; set; }
-
-		/// <summary>
-		/// Defines the selection height of the screenshot to be scaled
-		/// </summary>
 		private int ZoomHeight { get; set; }
-
-		/// <summary>
-		/// Defines the max height of all the monitors combined
-		/// </summary>
-		private int MaxHeight { get; set; }
-
-		/// <summary>
-		/// Defines the max width of all the monitors combined
-		/// </summary>
-		private int MaxWidth { get; set; }
-
-		/// <summary>
-		/// Defines the pen used to draw the crosshairs
-		/// </summary>
-		private Pen CrosshairPen { get; set; }
-
-		/// <summary>
-		/// Defines the pen used to draw the grids
-		/// </summary>
-		private Pen GridPen { get; set; }
-
-		/// <summary>
-		/// Defines the form that will act as a proxy
-		/// </summary>
-		private ScreenProxy Proxy { get; set; }
-
-		/// <summary>
-		/// Defines the hue of the current color
-		/// </summary>
-		private int H
-		{
-			get { return (int)(uxHueSlider.Value * 360M); }
-			set { uxHueSlider.Value = value / 360M; }
-		}
-
-		/// <summary>
-		/// Defines the saturation of the current color
-		/// </summary>
-		private int S
-		{
-			get { return (int)Math.Floor(uxSaturationSlider.Value * 100.0M); }
-			set { uxSaturationSlider.Value = value / 100M; }
-		}
-
-		/// <summary>
-		/// Defines the lightness of the current color
-		/// </summary>
-		private int L
-		{
-			get { return (int)(uxLightnessSlider.Value * 100M); }
-			set { uxLightnessSlider.Value = value / 100M; }
-		}
 		#endregion
 	}
 }

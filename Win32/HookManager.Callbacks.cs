@@ -119,7 +119,7 @@ namespace Clarified.Win32
 				{
 					// returns the error code returned by the last unmanaged function called using platform invoke that has the DllImportAttribute.SetLastError flag set
 					int errorCode = Marshal.GetLastWin32Error();
-					
+
 					// initializes and throws a new instance of the Win32Exception class with the specified error
 					throw new Win32Exception(errorCode);
 				}
@@ -140,29 +140,29 @@ namespace Clarified.Win32
 		/// Unhooks our window hook procedure
 		/// </summary>
 		private static void UnhookWindowsHook()
-        {
+		{
 			if (_mouseHookHandle != 0)
-            {
-                // uninstall hook
+			{
+				// uninstall hook
 				int result = UnhookWindowsHookEx(_mouseHookHandle);
 
-                // reset invalid handle
+				// reset invalid handle
 				_mouseHookHandle = 0;
 
-                // free up for GC
-                _mouseHookDelegate = null;
+				// free up for GC
+				_mouseHookDelegate = null;
 
-                // if failed and exception must be thrown
-                if (result == 0)
-                {
+				// if failed and exception must be thrown
+				if (result == 0)
+				{
 					// returns the error code returned by the last unmanaged function called using platform invoke that has the DllImportAttribute.SetLastError flag set
 					int errorCode = Marshal.GetLastWin32Error();
 
 					// initializes and throws a new instance of the Win32Exception class with the specified error
 					throw new Win32Exception(errorCode);
-                }
-            }
-        }
+				}
+			}
+		}
 		#endregion
 
 		#region Private Statics
