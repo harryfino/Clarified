@@ -1,4 +1,4 @@
-Clarified is an eye dropper utility for Windows that was inspired by xScope and Github for Windows. It’s goal is to bring the power of Loupe to designers working in Windows.
+Clarified is an eye dropper utility for Windows that was inspired by [xScope](http://xscopeapp.com/) and Github for Windows. It’s goal is to bring the power of Loupe to designers working in Windows.
 
 Clarified allows you to select multiple colors, and provides you with the Hex, RGB, and HSL values for each.
 
